@@ -1,0 +1,30 @@
+{
+  "name": "ace-nation-fitness-planner",
+  "version": "1.0.0",
+  "description": "Dynamic Workout & Meal Planner",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "tailwind": "tailwindcss -i ./src/input.css -o ./css/styles.css --watch",
+    "start": "concurrently \"npm run tailwind\" \"npm run dev\"",
+    "server": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "body-parser": "^2.2.0",
+    "bootstrap-icons": "^1.11.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "mongoose": "^8.13.1"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.16",
+    "concurrently": "^8.2.1",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.3.3",
+    "vite": "^6.2.4"
+  }
+}

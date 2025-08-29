@@ -1,0 +1,3080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Workout & Meal Planner | Ace Nation</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f0f2f5;
+            scroll-behavior: smooth;
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .hidden {
+            display: none;
+        }
+        .exercise-card {
+            transition: all 0.3s ease;
+        }
+        .exercise-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .progress-circle {
+            transform: rotate(-90deg);
+            transition: all 0.3s ease;
+        }
+        .badge {
+            position: relative;
+            overflow: hidden;
+        }
+        .badge::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255,255,255,0.2);
+            transform: rotate(45deg);
+            animation: shine 2s infinite;
+        }
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+        .meal-card {
+            transition: all 0.3s ease;
+        }
+        .meal-card:hover {
+            transform: scale(1.02);
+        }
+        .circular-progress {
+            position: relative;
+            height: 100px;
+            width: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mascot {
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        /* Meal Log Modal Styles */
+        .meal-type-option input[type="radio"]:checked + span {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .meal-type-option:hover {
+            background-color: #eff6ff;
+        }
+        
+        /* Success notification animation */
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); }
+            to { transform: translateX(100%); }
+        }
+        
+        /* Workout Tracking Styles */
+        .exercise-tracking-card {
+            transition: all 0.3s ease;
+            border: 2px solid #e5e7eb;
+            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+        }
+        
+        .exercise-tracking-card:hover {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+        }
+        
+        .exercise-tracking-card.completed {
+            border-color: #10b981;
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+        }
+        
+        .set-input {
+            transition: all 0.3s ease;
+        }
+        
+        .set-input:hover {
+            transform: scale(1.02);
+        }
+        
+        .set-input input {
+            transition: all 0.3s ease;
+            border: 2px solid #e5e7eb;
+        }
+        
+        .set-input input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            outline: none;
+        }
+        
+        .set-input input:disabled {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            color: #6b7280;
+            cursor: not-allowed;
+            border-color: #d1d5db;
+        }
+        
+        .set-input button {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .set-input button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .set-input button:active {
+            transform: translateY(0);
+        }
+        
+        .set-input button:disabled {
+            background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .set-input button.completed {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        #workout-timer {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        
+        #workout-progress-bar {
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+        
+        .workout-progress-container {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 1px solid #bfdbfe;
+        }
+        
+        .exercise-header {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .exercise-title {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 600;
+        }
+        
+        .target-badge {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            border: 1px solid #d1d5db;
+            color: #374151;
+            font-weight: 500;
+        }
+        
+        .completed-badge {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border: 1px solid #93c5fd;
+            color: #1e40af;
+            font-weight: 600;
+        }
+        
+        .workout-actions {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-top: 2px solid #e2e8f0;
+        }
+        
+        .action-button {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .action-button:active {
+            transform: translateY(0);
+        }
+        
+        .pause-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        
+        .pause-btn:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+        }
+        
+        .resume-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+        
+        .resume-btn:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+        }
+        
+        .finish-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .finish-btn:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        }
+        
+        .save-btn {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        }
+        
+        .save-btn:hover {
+            background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+        }
+        
+        /* Modal enhancements */
+        .workout-modal {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-bottom: 2px solid #e2e8f0;
+            margin: -32px -32px 24px -32px;
+            padding: 24px 32px;
+            border-radius: 12px 12px 0 0;
+        }
+        
+        .modal-title {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Simple Scrollbar Styles - Allow Default Scrollbar */
+        .workout-modal {
+            overflow-y: auto;
+            overflow-x: hidden;
+            max-height: 80vh;
+            min-height: 600px;
+            scroll-behavior: smooth;
+        }
+        
+        /* Subtle custom scrollbar (optional) */
+        .workout-modal::-webkit-scrollbar {
+            width: 12px;
+        }
+        
+        .workout-modal::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 6px;
+        }
+        
+        .workout-modal::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 6px;
+            border: 2px solid #f1f5f9;
+        }
+        
+        .workout-modal::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* Firefox scrollbar */
+        .workout-modal {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+        
+        /* Scroll indicator animation */
+        .scroll-indicator {
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-5px);
+            }
+            60% {
+                transform: translateY(-3px);
+            }
+        }
+        
+        /* Enhanced modal scrolling - FORCE SCROLLBAR */
+        .workout-modal {
+            overflow-y: scroll !important;
+            overflow-x: hidden !important;
+            scrollbar-gutter: stable !important;
+            padding-right: 8px !important;
+        }
+        
+        /* Smooth scroll behavior for all elements */
+        .workout-modal * {
+            scroll-behavior: smooth;
+        }
+        
+        /* Custom scrollbar for exercise cards */
+        .exercise-tracking-card {
+            scroll-margin-top: 20px;
+        }
+        
+        /* Force scrollbar visibility */
+        .workout-modal::-webkit-scrollbar {
+            -webkit-appearance: none !important;
+            appearance: none !important;
+            width: 20px !important;
+        }
+        
+        /* Ensure scrollbar is always shown */
+        .workout-modal {
+            scrollbar-width: auto !important;
+            scrollbar-color: #3b82f6 #e2e8f0 !important;
+        }
+        
+        /* Add visual scrollbar indicator */
+        .scrollbar-indicator {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 60px;
+            background: #3b82f6;
+            border-radius: 10px;
+            opacity: 0.8;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        /* Hide indicator when scrolling */
+        .workout-modal.scrolling .scrollbar-indicator {
+            opacity: 0;
+        }
+        
+        /* FINAL SCROLLBAR FORCE - Most aggressive approach */
+        .workout-modal {
+            overflow-y: scroll !important;
+            overflow-x: hidden !important;
+            scrollbar-gutter: stable !important;
+            scrollbar-width: auto !important;
+            scrollbar-color: #3b82f6 #e2e8f0 !important;
+            max-height: 75vh !important;
+            min-height: 700px !important;
+            height: auto !important;
+            padding-right: 12px !important;
+            border-right: 4px solid #3b82f6 !important;
+        }
+        
+        /* Visual scrollbar indicator */
+        .scrollbar-indicator {
+            height: 60px;
+            background: #3b82f6;
+            border-radius: 10px;
+            opacity: 0.8;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        /* Hide indicator when scrolling */
+        .workout-modal.scrolling .scrollbar-indicator {
+            opacity: 0;
+        }
+        
+        /* Dashboard Stats Cards Styling */
+        .dashboard-stats-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .dashboard-stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .dashboard-stats-card:active {
+            transform: translateY(0);
+        }
+        
+        /* Modal Header Styling */
+        .modal-header {
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .modal-title {
+            color: #1f2937;
+            font-weight: 700;
+        }
+        
+        /* Progress Bar Animations */
+        .progress-bar-animate {
+            transition: width 0.8s ease-in-out;
+        }
+        
+        /* Circular Progress Animation */
+        .circular-progress svg {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-circle {
+            transition: stroke-dashoffset 0.8s ease-in-out;
+        }
+        
+        /* Hover Effects for Interactive Elements */
+        .interactive-element {
+            transition: all 0.2s ease;
+        }
+        
+        .interactive-element:hover {
+            transform: scale(1.02);
+        }
+        
+        /* 6-Day Split Workout Plan Styling */
+        .workout-day-card {
+            transition: all 0.3s ease;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .workout-day-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .workout-day-card button {
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .workout-day-card button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Day-specific color schemes */
+        .workout-day-card:nth-child(1) { /* Push Day */
+            background: linear-gradient(135deg, #fef2f2 0%, #fce7f3 100%);
+            border-color: #fecaca;
+        }
+        
+        .workout-day-card:nth-child(2) { /* Pull Day */
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border-color: #bbf7d0;
+        }
+        
+        .workout-day-card:nth-child(3) { /* Legs Day */
+            background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+            border-color: #ddd6fe;
+        }
+        
+        .workout-day-card:nth-child(4) { /* Upper Push */
+            background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%);
+            border-color: #fed7aa;
+        }
+        
+        .workout-day-card:nth-child(5) { /* Upper Pull */
+            background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+            border-color: #99f6e4;
+        }
+        
+        .workout-day-card:nth-child(6) { /* Lower + Cardio */
+            background: linear-gradient(135deg, #eef2ff 0%, #dbeafe 100%);
+            border-color: #c7d2fe;
+        }
+        
+        /* Dashboard Workout Day Cards - Interactive Styling */
+        .workout-day-card {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .workout-day-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .workout-day-card:hover::before {
+            left: 100%;
+        }
+        
+        .workout-day-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .workout-day-card:active {
+            transform: translateY(-2px) scale(1.01);
+        }
+        
+        /* Color-coded hover effects for each day */
+        .workout-day-card:nth-child(1):hover {
+            border-color: #f87171;
+            box-shadow: 0 12px 30px rgba(239, 68, 68, 0.2);
+        }
+        
+        .workout-day-card:nth-child(2):hover {
+            border-color: #34d399;
+            box-shadow: 0 12px 30px rgba(52, 211, 153, 0.2);
+        }
+        
+        .workout-day-card:nth-child(3):hover {
+            border-color: #3b82f6;
+            box-shadow: 0 12px 30px rgba(59, 130, 246, 0.2);
+        }
+        
+        .workout-day-card:nth-child(4):hover {
+            border-color: #34d399;
+            box-shadow: 0 12px 30px rgba(52, 211, 153, 0.2);
+        }
+        
+        .workout-day-card:nth-child(5):hover {
+            border-color: #f87171;
+            box-shadow: 0 12px 30px rgba(239, 68, 68, 0.2);
+        }
+        
+        .workout-day-card:nth-child(6):hover {
+            border-color: #a855f7;
+            box-shadow: 0 12px 30px rgba(168, 85, 247, 0.2);
+        }
+        
+        /* Challenge Cards and Badges Styling */
+        .challenge-card {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .challenge-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .challenge-card:hover::before {
+            left: 100%;
+        }
+        
+        .challenge-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .challenge-card button {
+            transition: all 0.3s ease;
+        }
+        
+        .challenge-card button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .badge-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .badge-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .badge-card.unlocked {
+            opacity: 1;
+            border-color: #10b981;
+        }
+        
+        .badge-card.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Progress bar animations */
+        .challenge-progress-bar, #cardio-challenge-progress, #strength-challenge-progress, #consistency-challenge-progress {
+            transition: width 0.8s ease-in-out;
+        }
+        
+        /* Challenge completion celebration */
+        .challenge-complete {
+            animation: celebrate 0.6s ease-in-out;
+        }
+        
+        @keyframes celebrate {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        /* Points animation */
+        .points-earned {
+            animation: pointsFloat 1s ease-out;
+        }
+        
+        @keyframes pointsFloat {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-20px) scale(1.2); opacity: 0; }
+        }
+        
+        /* Achievement Badges and Cards Styling */
+        .achievement-badge {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .achievement-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .achievement-badge:hover::before {
+            left: 100%;
+        }
+        
+        .achievement-badge:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .achievement-badge:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+        
+        /* Achievement detail cards */
+        .achievement-detail-card {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .achievement-detail-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 0 20px 20px 0;
+            border-color: transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .achievement-detail-card:hover::after {
+            border-color: rgba(255, 255, 255, 0.3) transparent transparent transparent;
+        }
+        
+        .achievement-detail-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Badge unlock animation */
+        .badge-unlock {
+            animation: badgeUnlock 0.8s ease-out;
+        }
+        
+        @keyframes badgeUnlock {
+            0% { transform: scale(0.5) rotate(-180deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(0deg); opacity: 0.8; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        
+        /* Achievement progress indicators */
+        .achievement-progress {
+            transition: all 0.5s ease;
+        }
+        
+        .achievement-progress:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Locked achievement styling */
+        .achievement-badge.locked {
+            filter: grayscale(30%);
+        }
+        
+        .achievement-badge.locked:hover {
+            filter: grayscale(0%);
+            transform: translateY(-2px) scale(1.03);
+        }
+        
+        /* Achievement notification styling */
+        .achievement-notification {
+            animation: achievementSlide 0.5s ease-out;
+        }
+        
+        @keyframes achievementSlide {
+            0% { transform: translateX(-100%) scale(0.8); opacity: 0; }
+            100% { transform: translateX(0) scale(1); opacity: 1; }
+        }
+        
+        /* Exercise completion styling */
+        .exercise-card button.completed {
+            color: #059669 !important;
+        }
+        
+        .exercise-card button.completed:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Meal frequency selection styling */
+        button[onclick^="selectMealFrequency"] {
+            transition: all 0.3s ease;
+        }
+        
+        button[onclick^="selectMealFrequency"]:hover {
+            transform: translateY(-1px);
+        }
+        
+        /* Newsletter subscription styling */
+        #newsletter-email:focus {
+            outline: none;
+            ring: 2px;
+            ring-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-blue-600 text-white p-4 fixed w-full top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Ace Nation</h1>
+            <div id="nav-buttons">
+                <button onclick="showLogin()" class="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 mr-2">Login</button>
+                <button onclick="showSignup()" class="px-4 py-2 bg-transparent border border-white rounded-lg hover:bg-blue-500">Sign Up</button>
+            </div>
+            <div id="user-menu" class="hidden">
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleDropdown()" class="flex items-center space-x-2">
+                        <i class="bi bi-person-circle text-2xl"></i>
+                        <span class="hidden md:inline">My Profile</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div id="profile-dropdown" class="hidden absolute right-4 mt-32 w-48 bg-white text-gray-800 rounded-lg shadow-lg py-2">
+                        <a href="#dashboard" class="block px-4 py-2 hover:bg-gray-100"><i class="bi bi-speedometer2 mr-2"></i> Dashboard</a>
+                        <a href="#profile" class="block px-4 py-2 hover:bg-gray-100"><i class="bi bi-person mr-2"></i> Profile</a>
+                        <a href="#settings" class="block px-4 py-2 hover:bg-gray-100"><i class="bi bi-gear mr-2"></i> Settings</a>
+                        <div class="border-t border-gray-200 my-1"></div>
+                        <button onclick="handleLogout()" class="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-500">
+                            <i class="bi bi-box-arrow-right mr-2"></i> Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Welcome Section -->
+    <section id="welcome" class="pt-20 min-h-screen">
+        <div class="container mx-auto px-4 py-16">
+            <div class="text-center mb-16">
+                <h1 class="text-4xl md:text-6xl font-bold text-gray-800 mb-6">Transform Your Life with Ace Nation Fitness</h1>
+                <p class="text-xl text-gray-600 mb-8">Personalized workout and meal plans tailored to your goals</p>
+                <button onclick="showSignup()" class="bg-blue-600 text-white px-8 py-4 rounded-lg text-xl hover:bg-blue-700 transition">
+                    Get Started Free
+                </button>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8 mt-16">
+                <div class="glass-effect p-6 rounded-xl">
+                    <i class="bi bi-calendar-check text-4xl text-blue-600"></i>
+                    <h3 class="text-xl font-semibold mt-4">Custom Workout Plans</h3>
+                    <p class="text-gray-600 mt-2">6-day split programs for muscle gain or fat loss</p>
+                </div>
+                <div class="glass-effect p-6 rounded-xl">
+                    <i class="bi bi-pie-chart text-4xl text-blue-600"></i>
+                    <h3 class="text-xl font-semibold mt-4">Nutrition Tracking</h3>
+                    <p class="text-gray-600 mt-2">AI-powered meal recommendations and macro tracking</p>
+                </div>
+                <div class="glass-effect p-6 rounded-xl">
+                    <i class="bi bi-graph-up text-4xl text-blue-600"></i>
+                    <h3 class="text-xl font-semibold mt-4">Progress Analytics</h3>
+                    <p class="text-gray-600 mt-2">Track your fitness journey with detailed insights</p>
+                </div>
+            </div>
+
+            <div class="mt-24">
+                <h2 class="text-3xl font-bold text-center mb-12">How It Works</h2>
+                <div class="grid md:grid-cols-4 gap-6">
+                    <div class="text-center">
+                        <div class="bg-blue-100 rounded-full w-20 h-20 mx-auto flex items-center justify-center mb-4">
+                            <i class="bi bi-person-plus text-3xl text-blue-600"></i>
+                        </div>
+                        <h3 class="font-semibold">Create Account</h3>
+                        <p class="text-gray-600 text-sm mt-2">Sign up and answer a few questions about your goals</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-blue-100 rounded-full w-20 h-20 mx-auto flex items-center justify-center mb-4">
+                            <i class="bi bi-clipboard-data text-3xl text-blue-600"></i>
+                        </div>
+                        <h3 class="font-semibold">Get Personalized Plans</h3>
+                        <p class="text-gray-600 text-sm mt-2">Our AI creates custom meal and workout plans for you</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-blue-100 rounded-full w-20 h-20 mx-auto flex items-center justify-center mb-4">
+                            <i class="bi bi-activity text-3xl text-blue-600"></i>
+                        </div>
+                        <h3 class="font-semibold">Track Progress</h3>
+                        <p class="text-gray-600 text-sm mt-2">Log your activities and monitor your improvements</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-blue-100 rounded-full w-20 h-20 mx-auto flex items-center justify-center mb-4">
+                            <i class="bi bi-trophy text-3xl text-blue-600"></i>
+                        </div>
+                        <h3 class="font-semibold">Earn Rewards</h3>
+                        <p class="text-gray-600 text-sm mt-2">Complete challenges and unlock achievements</p>
+                    </div>
+                </div>
+            </div>
+                
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section id="dashboard" class="hidden pt-20 min-h-screen">
+        <div class="container mx-auto px-4 py-8">
+            <div class="flex flex-col md:flex-row justify-between items-start mb-8">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-bold">Welcome back, <span id="username">User</span>!</h2>
+                    <p class="text-gray-600">Here's your fitness overview for today</p>
+                </div>
+                <div class="mt-4 md:mt-0 flex space-x-3">
+                    <button onclick="startWorkout()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                        <i class="bi bi-plus-lg mr-2"></i> Log Workout
+                    </button>
+                    <button onclick="openMealLogModal('Custom', '', 0, 0, 0, 0)" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                        <i class="bi bi-plus-lg mr-2"></i> Log Meal
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer dashboard-stats-card" onclick="openTodayPlanModal()">     
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-gray-500 text-sm">Today's Plan</h3>
+                            <p class="font-semibold text-lg mt-1" id="today-plan-title">Push Day + Cardio</p>
+                        </div>
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-lg" id="today-plan-day">Day 3/6</span>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-gray-100">
+                        <span class="text-xs text-blue-600 font-medium">Click to view details</span>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer dashboard-stats-card" onclick="openCaloriesModal()">
+                    <div class="flex justify-between">
+                        <div>
+                            <h3 class="text-gray-500 text-sm">Calories</h3>
+                            <p class="font-semibold text-lg mt-1" id="calories-display">1,250 / 2,100</p>
+                        </div>
+                        <div class="circular-progress relative">
+                            <svg width="60" height="60">
+                                <circle cx="30" cy="30" r="25" fill="none" stroke="#e5e7eb" stroke-width="5"></circle>
+                                <circle cx="30" cy="30" r="25" fill="none" stroke="#3b82f6" stroke-width="5" stroke-dasharray="157" stroke-dashoffset="60" class="progress-circle" id="calories-progress-circle"></circle>
+                            </svg>
+                            <span class="absolute inset-0 flex items-center justify-center text-sm font-semibold" id="calories-percentage">60%</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-gray-100">
+                        <span class="text-xs text-blue-600 font-medium">Click to view details</span>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer dashboard-stats-card" onclick="openProteinModal()">
+                    <div class="flex justify-between">
+                        <div>
+                            <h3 class="text-gray-500 text-sm">Protein</h3>
+                            <p class="font-semibold text-lg mt-1" id="protein-display">85g / 100g</p>
+                        </div>
+                        <div class="circular-progress relative">
+                            <svg width="60" height="60">
+                                <circle cx="30" cy="30" r="25" fill="none" stroke="#e5e7eb" stroke-width="5"></circle>
+                                <circle cx="30" cy="30" r="25" fill="none" stroke="#3b82f6" stroke-width="5" stroke-dasharray="157" stroke-dashoffset="78" class="progress-circle" id="protein-progress-circle"></circle>
+                            </svg>
+                            <span class="absolute inset-0 flex items-center justify-center text-sm font-semibold" id="protein-percentage">85%</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-gray-100">
+                        <span class="text-xs text-blue-600 font-medium">Click to view details</span>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer dashboard-stats-card" onclick="openWorkoutsModal()">
+                    <div class="flex justify-between">
+                        <div>
+                            <h3 class="text-gray-500 text-sm">Workouts</h3>
+                            <p class="font-semibold text-lg mt-1" id="workouts-count">18 this month</p>
+                        </div>
+                        <i class="bi bi-bar-chart-fill text-blue-600 text-3xl"></i>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-gray-100">
+                        <span class="text-xs text-blue-600 font-medium">Click to view details</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workout & Meal Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                <!-- Today's Workout -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-semibold">Today's Workout: Push Day</h3>
+                            <span class="text-sm text-gray-500">~60 min</span>
+                        </div>
+                        
+                        <div class="space-y-4 mb-6">
+                            <div class="exercise-card p-3 bg-gray-50 rounded-lg flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-medium">Bench Press</h4>
+                                    <p class="text-sm text-gray-600">4 sets x 8-10 reps</p>
+                                </div>
+                                <button onclick="markExerciseComplete('bench-press')" class="text-blue-600 hover:text-blue-800 transition-colors">
+                                    <i class="bi bi-check-circle text-xl"></i>
+                                </button>
+                            </div>
+                            <div class="exercise-card p-3 bg-gray-50 rounded-lg flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-medium">Incline Dumbbell Press</h4>
+                                    <p class="text-sm text-gray-600">3 sets x 10-12 reps</p>
+                                </div>
+                                <button onclick="markExerciseComplete('incline-press')" class="text-blue-600 hover:text-blue-800 transition-colors">
+                                    <i class="bi bi-check-circle text-xl"></i>
+                                </button>
+                            </div>
+                            <div class="exercise-card p-3 bg-gray-50 rounded-lg flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-medium">Shoulder Press</h4>
+                                    <p class="text-sm text-gray-600">3 sets x 10 reps</p>
+                                </div>
+                                <button onclick="markExerciseComplete('shoulder-press')" class="text-blue-600 hover:text-blue-800 transition-colors">
+                                    <i class="bi bi-check-circle text-xl"></i>
+                                </button>
+                            </div>
+                            <div class="exercise-card p-3 bg-gray-50 rounded-lg flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-medium">Tricep Pushdowns</h4>
+                                    <p class="text-sm text-gray-600">3 sets x 12-15 reps</p>
+                                </div>
+                                <button onclick="markExerciseComplete('tricep-pushdowns')" class="text-blue-600 hover:text-blue-800 transition-colors">
+                                    <i class="bi bi-check-circle text-xl"></i>
+                                </button>
+                            </div>
+                            <div class="exercise-card p-3 bg-gray-50 rounded-lg flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-medium">Cardio: Treadmill</h4>
+                                    <p class="text-sm text-gray-600">20 min moderate intensity</p>
+                                </div>
+                                <button onclick="markExerciseComplete('cardio')" class="text-blue-600 hover:text-blue-800 transition-colors">
+                                    <i class="bi bi-check-circle text-xl"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between">
+                            <button onclick="openSixDaySplitModal()" class="text-blue-600 font-medium hover:underline flex items-center">
+                                <i class="bi bi-calendar-week mr-2"></i> View Full 6-Day Split
+                            </button>
+                            <button onclick="startWorkout()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                                Start Workout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Meal Plan -->
+                <div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-semibold">Today's Meals</h3>
+                            <button onclick="openMealPlanModal()" class="text-sm text-blue-600 hover:underline">View Full Plan</button>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="meal-card p-3 border border-gray-100 rounded-lg">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="font-medium">Breakfast</h4>
+                                    <span class="text-sm text-gray-500">8:00 AM</span>
+                                </div>
+                                <p class="text-sm text-gray-600">Protein Oatmeal with Berries</p>
+                                <div class="mt-2 flex justify-between items-center text-xs text-gray-500">
+                                    <span>450 cal</span>
+                                    <div class="flex space-x-3">
+                                        <span>P: 25g</span>
+                                        <span>C: 58g</span>
+                                        <span>F: 12g</span>
+                                    </div>
+                                </div>
+                                <button onclick="openMealLogModal('Breakfast', 'Protein Oatmeal with Berries', 450, 25, 58, 12)" class="mt-2 w-full text-blue-600 text-sm border border-blue-600 rounded py-1 hover:bg-blue-50">Log Meal</button>
+                            </div>
+                            
+                            <div class="meal-card p-3 border border-gray-100 rounded-lg">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="font-medium">Lunch</h4>
+                                    <span class="text-sm text-gray-500">12:30 PM</span>
+                                </div>
+                                <p class="text-sm text-gray-600">Grilled Chicken Salad with Quinoa</p>
+                                <div class="mt-2 flex justify-between items-center text-xs text-gray-500">
+                                    <span>520 cal</span>
+                                    <div class="flex space-x-3">
+                                        <span>P: 40g</span>
+                                        <span>C: 45g</span>
+                                        <span>F: 18g</span>
+                                    </div>
+                                </div>
+                                <button onclick="openMealLogModal('Lunch', 'Grilled Chicken Salad with Quinoa', 520, 40, 45, 18)" class="mt-2 w-full text-blue-600 text-sm border border-blue-600 rounded py-1 hover:bg-blue-50">Log Meal</button>
+                            </div>
+                            
+                            <div class="meal-card p-3 border border-gray-100 rounded-lg">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="font-medium">Dinner</h4>
+                                    <span class="text-sm text-gray-500">7:00 PM</span>
+                                </div>
+                                <p class="text-sm text-gray-600">Salmon with Sweet Potato & Vegetables</p>
+                                <div class="mt-2 flex justify-between items-center text-xs text-gray-500">
+                                    <span>580 cal</span>
+                                    <div class="flex space-x-3">
+                                        <span>P: 35g</span>
+                                        <span>C: 40g</span>
+                                        <span>F: 28g</span>
+                                    </div>
+                                </div>
+                                <button onclick="openMealLogModal('Dinner', 'Salmon with Sweet Potato & Vegetables', 580, 35, 40, 28)" class="mt-2 w-full text-blue-600 text-sm border border-blue-600 rounded py-1 hover:bg-blue-50">Log Meal</button>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 bg-blue-50 p-3 rounded-lg">
+                            <div class="flex items-start">
+                                <i class="bi bi-lightbulb text-blue-600 text-lg mr-2 mt-0.5"></i>
+                                <div>
+                                    <h4 class="font-medium text-blue-800 text-sm">AI Suggestion</h4>
+                                    <p class="text-sm text-blue-700">Try having your protein shake within 30 mins after your workout today for optimal recovery.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Today's Logged Meals -->
+                        <div class="mt-4">
+                            <h4 class="font-medium text-gray-800 mb-3">Today's Logged Meals</h4>
+                            <div id="logged-meals-container" class="space-y-2">
+                                <!-- Logged meals will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Gamification Section -->
+            <div class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-6 rounded-lg text-white mb-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-4 md:mb-0">
+                        <h3 class="text-xl font-bold mb-2">Weekly Challenge: Cardio King</h3>
+                        <p class="text-sm md:text-base opacity-90">Complete 5 cardio sessions this week to earn 100 points and unlock the "Endurance Master" badge!</p>
+                        <div class="mt-3">
+                            <div class="w-full bg-white bg-opacity-20 rounded-full h-2.5">
+                                <div id="challenge-progress-bar" class="bg-white h-2.5 rounded-full transition-all duration-500" style="width: 60%"></div>
+                            </div>
+                            <div class="flex justify-between mt-1 text-xs">
+                                <span id="challenge-progress-text">3/5 completed</span>
+                                <span id="challenge-time-left">2 days left</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="mascot mr-4">
+                            <i class="bi bi-emoji-smile-fill text-5xl"></i>
+                        </div>
+                        <button onclick="openChallengesModal()" class="bg-white text-purple-600 px-4 py-2 rounded-lg font-medium hover:bg-opacity-90 transition-all duration-300 hover:scale-105">
+                            View All Challenges
+                        </button>
+                        <button onclick="completeCardioSession()" class="bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition-all duration-300 hover:scale-105">
+                            <i class="bi bi-check-circle mr-2"></i>Complete Cardio
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Badges Section -->
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Your Achievements</h3>
+                    <button onclick="openAchievementsModal()" class="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                        <i class="bi bi-trophy mr-1"></i> View All Achievements
+                    </button>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                    <!-- First Workout Badge -->
+                    <div onclick="showAchievementDetails('First Workout', 'amber', 'Unlocked on your first workout session!', 'Complete your first workout to earn this badge.', true, '2025-01-01')" class="achievement-badge bg-amber-100 p-4 rounded-lg text-center cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 border-2 border-amber-300">
+                        <div class="bg-amber-500 text-white rounded-full w-12 h-12 mx-auto flex items-center justify-center mb-2">
+                            <i class="bi bi-trophy-fill text-xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-amber-700">First Workout</p>
+                        <p class="text-xs text-amber-600 mt-1">Unlocked!</p>
+                    </div>
+                    
+                    <!-- Week Streak Badge -->
+                    <div onclick="showAchievementDetails('Week Streak', 'green', 'Maintained a 7-day workout streak!', 'Complete workouts for 7 consecutive days.', true, '2025-01-05')" class="achievement-badge bg-green-100 p-4 rounded-lg text-center cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 border-2 border-green-300">
+                        <div class="bg-green-500 text-white rounded-full w-12 h-12 mx-auto flex items-center justify-center mb-2">
+                            <i class="bi bi-calendar-check-fill text-xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-green-700">Week Streak</p>
+                        <p class="text-xs text-green-600 mt-1">Unlocked!</p>
+                    </div>
+                    
+                    <!-- Protein Pro Badge -->
+                    <div onclick="showAchievementDetails('Protein Pro', 'blue', 'Consistently hit your protein goals!', 'Meet your daily protein target for 5 consecutive days.', true, '2025-01-03')" class="achievement-badge bg-blue-100 p-4 rounded-lg text-center cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 border-2 border-blue-300">
+                        <div class="bg-blue-500 text-white rounded-full w-12 h-12 mx-auto flex items-center justify-center mb-2">
+                            <i class="bi bi-lightning-fill text-xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-blue-700">Protein Pro</p>
+                        <p class="text-xs text-blue-600 mt-1">Unlocked!</p>
+                    </div>
+                    
+                    <!-- Endurance Master Badge (Locked) -->
+                    <div onclick="showAchievementDetails('Endurance Master', 'indigo', 'Complete the Cardio King challenge!', 'Finish 5 cardio sessions in one week to unlock this badge.', false, null)" class="achievement-badge bg-gray-100 p-4 rounded-lg text-center cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 border-2 border-gray-300 opacity-60">
+                        <div class="bg-indigo-500 text-white rounded-full w-12 h-12 mx-auto flex items-center justify-center mb-2">
+                            <i class="bi bi-heart-pulse text-xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-gray-700">Endurance Master</p>
+                        <p class="text-xs text-gray-500 mt-1">Locked</p>
+                    </div>
+                    
+                    <!-- Power Master Badge (Locked) -->
+                    <div onclick="showAchievementDetails('Power Master', 'red', 'Complete the Strength Warrior challenge!', 'Finish 4 strength training sessions in one week to unlock this badge.', false, null)" class="achievement-badge bg-gray-100 p-4 rounded-lg text-center cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 border-2 border-gray-300 opacity-60">
+                        <div class="bg-red-500 text-white rounded-full w-12 h-12 mx-auto flex items-center justify-center mb-2">
+                            <i class="bi bi-lightning-charge text-xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-gray-700">Power Master</p>
+                        <p class="text-xs text-gray-500 mt-1">Locked</p>
+                    </div>
+                    
+                    <!-- Consistency Master Badge (Locked) -->
+                    <div onclick="showAchievementDetails('Consistency Master', 'purple', 'Complete the Consistency King challenge!', 'Work out for 6 consecutive days to unlock this badge.', false, null)" class="achievement-badge bg-gray-100 p-4 rounded-lg text-center cursor-pointer transition-all duration-300 hover:scale-105 border-2 border-gray-300 opacity-60">
+                        <div class="bg-purple-500 text-white rounded-full w-12 h-12 mx-auto flex items-center justify-center mb-2">
+                            <i class="bi bi-calendar-week text-xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-gray-700">Consistency Master</p>
+                        <p class="text-xs text-gray-500 mt-1">Locked</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Workout Plan Grid -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-4">Your 6-Day Workout Split</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <!-- Day 1: Push -->
+                    <div onclick="openWorkoutDayModal('Push Day', 'Chest, Shoulders, Triceps', [
+                        'Bench Press: 4 sets x 8-10 reps',
+                        'Incline Dumbbell Press: 3 sets x 10-12 reps',
+                        'Shoulder Press: 3 sets x 10 reps',
+                        'Tricep Extensions: 3 sets x 12-15 reps',
+                        'Chest Flies: 3 sets x 12-15 reps'
+                    ], 'red')" class="workout-day-card bg-white p-4 rounded-lg shadow-sm cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 border-2 border-transparent hover:border-red-300">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-medium">Day 1</h4>
+                            <span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">Push</span>
+                        </div>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Bench Press</li>
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Shoulder Press</li>
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Tricep Extensions</li>
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Chest Flies</li>
+                        </ul>
+                        <div class="mt-3 pt-2 border-t border-gray-100">
+                            <span class="text-xs text-blue-600 font-medium">Click to view details</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Day 2: Pull -->
+                    <div onclick="openWorkoutDayModal('Pull Day', 'Back, Biceps, Rear Delts', [
+                        'Deadlifts: 4 sets x 6-8 reps',
+                        'Pull Ups: 3 sets x 8-12 reps',
+                        'Barbell Rows: 3 sets x 8-10 reps',
+                        'Lat Pulldowns: 3 sets x 10-12 reps',
+                        'Bicep Curls: 3 sets x 10-12 reps'
+                    ], 'green')" class="workout-day-card bg-white p-4 rounded-lg shadow-sm cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 border-2 border-transparent hover:border-green-300">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-medium">Day 2</h4>
+                            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Pull</span>
+                        </div>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Deadlifts</li>
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Pull Ups</li>
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Barbell Rows</li>
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Bicep Curls</li>
+                        </ul>
+                        <div class="mt-3 pt-2 border-t border-gray-100">
+                            <span class="text-xs text-green-600 font-medium">Click to view details</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Day 3: Push + Cardio -->
+                    <div onclick="openWorkoutDayModal('Push + Cardio Day', 'Chest, Shoulders, Triceps + Cardio', [
+                        'Incline Press: 4 sets x 8-10 reps',
+                        'Lateral Raises: 3 sets x 12-15 reps',
+                        'Tricep Pushdowns: 3 sets x 12-15 reps',
+                        'Cable Flyes: 3 sets x 12-15 reps',
+                        '20 min Cardio: Treadmill/Stationary Bike'
+                    ], 'blue')" class="workout-day-card bg-white p-4 rounded-lg shadow-sm cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 border-2 border-blue-600 hover:border-blue-500">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-medium">Day 3</h4>
+                            <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Push + Cardio</span>
+                        </div>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Incline Press</li>
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Lateral Raises</li>
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Tricep Pushdowns</li>
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>20min Cardio</li>
+                        </ul>
+                        <div class="mt-3 pt-2 border-t border-gray-100">
+                            <span class="text-xs text-blue-600 font-medium">Click to view details</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Day 4: Pull -->
+                    <div onclick="openWorkoutDayModal('Pull Day', 'Back, Biceps, Traps', [
+                        'Lat Pulldowns: 4 sets x 8-10 reps',
+                        'Seated Rows: 3 sets x 10-12 reps',
+                        'Face Pulls: 3 sets x 15-20 reps',
+                        'Hammer Curls: 3 sets x 12-15 reps',
+                        'Shrugs: 3 sets x 15-20 reps'
+                    ], 'green')" class="workout-day-card bg-white p-4 rounded-lg shadow-sm cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 border-2 border-transparent hover:border-green-300">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-medium">Day 4</h4>
+                            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Pull</span>
+                        </div>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Lat Pulldowns</li>
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Seated Rows</li>
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Face Pulls</li>
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Hammer Curls</li>
+                        </ul>
+                        <div class="mt-3 pt-2 border-t border-gray-100">
+                            <span class="text-xs text-green-600 font-medium">Click to view details</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Day 5: Legs + Core -->
+                    <div onclick="openWorkoutDayModal('Legs + Core Day', 'Quads, Hamstrings, Calves, Core', [
+                        'Squats: 4 sets x 8-10 reps',
+                        'Leg Press: 3 sets x 10-12 reps',
+                        'Lunges: 3 sets x 10-12 reps each leg',
+                        'Romanian Deadlifts: 3 sets x 8-10 reps',
+                        'Ab Workout: 3 sets x 15-20 reps'
+                    ], 'red')" class="workout-day-card bg-white p-4 rounded-lg shadow-sm cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 border-2 border-transparent hover:border-red-300">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-medium">Day 5</h4>
+                            <span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">Legs + Core</span>
+                        </div>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Squats</li>
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Leg Press</li>
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Lunges</li>
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Ab Workout</li>
+                        </ul>
+                        <div class="mt-3 pt-2 border-t border-gray-100">
+                            <span class="text-xs text-red-600 font-medium">Click to view details</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Day 6: Full Body -->
+                    <div onclick="openWorkoutDayModal('Full Body Day', 'Light Compound Movements + Cardio', [
+                        'Light Bench Press: 3 sets x 8-10 reps',
+                        'Light Rows: 3 sets x 8-10 reps',
+                        'Light Squats: 3 sets x 8-10 reps',
+                        'Core Circuit: 3 rounds',
+                        '30 min Cardio: Moderate intensity'
+                    ], 'purple')" class="workout-day-card bg-white p-4 rounded-lg shadow-sm cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 border-2 border-transparent hover:border-purple-300">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-medium">Day 6</h4>
+                            <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">Full Body</span>
+                        </div>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Light Bench</li>
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Light Rows</li>
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>Light Squats</li>
+                            <li class="flex items-center"><i class="bi bi-dot text-lg"></i>30min Cardio</li>
+                        </ul>
+                        <div class="mt-3 pt-2 border-t border-gray-100">
+                            <span class="text-xs text-purple-600 font-medium">Click to view details</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Onboarding Section -->
+    <section id="onboarding" class="hidden pt-20 min-h-screen">
+        <div class="container mx-auto px-4 py-8">
+            <div class="max-w-3xl mx-auto">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-3xl font-bold">Let's Create Your Plan</h2>
+                    <div class="flex items-center">
+                        <span class="text-sm text-gray-600 mr-2">Step <span id="current-step">1</span>/5</span>
+                        <div class="bg-gray-200 rounded-full h-2 w-40">
+                            <div id="progress-bar" class="bg-blue-600 h-2 rounded-full" style="width: 20%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 1: Basic Info -->
+                <div id="step-1" class="bg-white p-8 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold mb-6">Basic Information</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-gray-700 mb-2">Age</label>
+                            <input type="number" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Enter your age">
+                        </div>
+                        <div>
+                           
+                            <label for="gender" class="block text-gray-700 mb-2">Gender</label>
+                            <select id="gender" name="gender" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                                <option value="" disabled selected>Select your gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                            
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Height</label>
+                            <div class="flex space-x-4">
+                                <input type="number" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Feet">
+                                <input type="number" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Inches">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Weight (Kgs)</label>
+                            <input type="number" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Enter your weight">
+                        </div>
+                    </div>
+                    <div class="mt-8 flex justify-end">
+                        <button onclick="nextStep(1)" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
+                            Continue
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Step 2: Fitness Goals -->
+                <div id="step-2" class="hidden bg-white p-8 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold mb-6">What are your main fitness goals?</h3>
+                
+                    <label for="fitness-goal" class="block text-gray-700 mb-2">Select Your Fitness Goal</label>
+                    <select id="fitness-goal" name="fitness-goal" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        <option value="" disabled selected>Select your goal</option>
+                        <option value="build-muscle">💪 Build Muscle - Strength training & progressive overload</option>
+                        <option value="lose-weight">🔥 Lose Weight - Calorie deficit & cardio</option>
+                        <option value="improve-fitness">🏃 Improve Fitness - Overall health & endurance</option>
+                        <option value="maintain-weight">⚖️ Maintain Weight - Balance & consistency</option>
+                    </select>
+                
+                    <div class="mt-8 flex justify-between">
+                        <button onclick="prevStep(2)" class="text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50">
+                            Back
+                        </button>
+                        <button onclick="nextStep(2)" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
+                            Continue
+                        </button>
+                    </div>
+                </div>
+                
+                
+                <!-- Step 3: Experience Level -->
+                <div id="step-3" class="hidden bg-white p-8 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold mb-6">What's your fitness experience level?</h3>
+                
+                    <label for="fitness-experience" class="block text-gray-700 mb-2">Select Your Experience Level</label>
+                    <select id="fitness-experience" name="fitness-experience" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        <option value="" disabled selected>Select your experience level</option>
+                        <option value="beginner">🟢 Beginner - Little to no experience with structured workouts</option>
+                        <option value="intermediate">🟡 Intermediate - Some experience with regular workouts</option>
+                        <option value="advanced">🔴 Advanced - Experienced with consistent training for 1+ years</option>
+                    </select>
+                
+                    <div class="mt-8 flex justify-between">
+                        <button onclick="prevStep(3)" class="text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50">
+                            Back
+                        </button>
+                        <button onclick="nextStep(3)" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
+                            Continue
+                        </button>
+                    </div>
+                </div>
+                
+                
+                <!-- Step 4: Dietary Preferences -->
+                <div id="step-4" class="hidden bg-white p-8 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold mb-6">Dietary Preferences</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-gray-700 mb-2">Do you follow any specific diet?</label>
+                            <select class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                                <option>No specific diet</option>
+                                <option>Vegetarian</option>
+                                <option>Vegan</option>
+                                <option>Keto</option>
+                                <option>Paleo</option>
+                                <option>Mediterranean</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 mb-2">Any food allergies or intolerances?</label>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="bg-gray-100 px-3 py-1 rounded-full text-gray-700 flex items-center cursor-pointer hover:bg-gray-200">
+                                    <input type="checkbox" class="mr-1"> Dairy
+                                </span>
+                                <span class="bg-gray-100 px-3 py-1 rounded-full text-gray-700 flex items-center cursor-pointer hover:bg-gray-200">
+                                    <input type="checkbox" class="mr-1"> Gluten
+                                </span>
+                                <span class="bg-gray-100 px-3 py-1 rounded-full text-gray-700 flex items-center cursor-pointer hover:bg-gray-200">
+                                    <input type="checkbox" class="mr-1"> Nuts
+                                </span>
+                                <span class="bg-gray-100 px-3 py-1 rounded-full text-gray-700 flex items-center cursor-pointer hover:bg-gray-200">
+                                    <input type="checkbox" class="mr-1"> Seafood
+                                </span>
+                                <span class="bg-gray-100 px-3 py-1 rounded-full text-gray-700 flex items-center cursor-pointer hover:bg-gray-200">
+                                    <input type="checkbox" class="mr-1"> Eggs
+                                </span>
+                                <span class="bg-gray-100 px-3 py-1 rounded-full text-gray-700 flex items-center cursor-pointer hover:bg-gray-200">
+                                    <input type="checkbox" class="mr-1"> Soy
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 mb-2">How many meals do you prefer per day?</label>
+                            <div class="grid grid-cols-3 gap-3">
+                                <button onclick="selectMealFrequency('3')" class="p-2 border rounded-lg hover:bg-blue-50 hover:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors">3 meals</button>
+                                <button onclick="selectMealFrequency('4')" class="p-2 border rounded-lg hover:bg-blue-50 hover:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors">4 meals</button>
+                                <button onclick="selectMealFrequency('5+')" class="p-2 border rounded-lg hover:bg-blue-50 hover:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors">5+ meals</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8 flex justify-between">
+                        <button onclick="prevStep(4)" class="text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50">
+                            Back
+                        </button>
+                        <button onclick="nextStep(4)" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
+                            Continue
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Step 5: Availability -->
+                <div id="step-5" class="hidden bg-white p-8 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold mb-6">Workout Availability</h3>
+                    
+                    <div class="space-y-6">
+                        <!-- Days per week selection -->
+                        <div>
+                            <label for="workout-days" class="block text-gray-700 mb-2">How many days can you work out per week?</label>
+                            <select id="workout-days" name="workout-days" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                                <option value="" disabled selected>Select workout days</option>
+                                <option value="3">3 days</option>
+                                <option value="4">4 days</option>
+                                <option value="5">5 days</option>
+                                <option value="6+">6+ days</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Preferred workout duration selection -->
+                        <div>
+                            <label for="workout-duration" class="block text-gray-700 mb-2">Preferred workout duration</label>
+                            <select id="workout-duration" name="workout-duration" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                                <option value="" disabled selected>Select workout duration</option>
+                                <option value="30 min">30 min</option>
+                                <option value="45 min">45 min</option>
+                                <option value="60+ min">60+ min</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Gym access selection -->
+                        <div>
+                            <label for="gym-access" class="block text-gray-700 mb-2">Do you have access to a gym?</label>
+                            <select id="gym-access" name="gym-access" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                                <option value="" disabled selected>Select an option</option>
+                                <option value="yes">Yes</option>
+                                <option value="no">No (Home Workouts)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 flex justify-between">
+                        <button onclick="prevStep(5)" class="text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50">
+                            Back
+                        </button>
+                        <button onclick="finishOnboarding()" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700">
+                            Generate My Plan
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Loading State -->
+                <div id="loading-state" class="hidden bg-white p-8 rounded-lg shadow-sm text-center">
+                    <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-600 border-solid mx-auto mb-6"></div>
+                    <h3 class="text-xl font-semibold mb-3">Creating Your Personalized Plan</h3>
+                    <p class="text-gray-600">Our AI is analyzing your info to build the perfect workout and meal plan...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-xl w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Login</h2>
+                <button onclick="hideModals()" class="text-gray-500 hover:text-gray-700">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">Email</label>
+                    <input type="email" id="login-email" required class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2">Password</label>
+                    <input type="password" id="login-password" required class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">Login</button>
+                <p class="text-center text-gray-600 mt-4">Don't have an account? <button type="button" onclick="showSignup(); hideModals();" class="text-blue-600 hover:underline">Sign up</button></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signup-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-xl w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Create Account</h2>
+                <button onclick="hideModals()" class="text-gray-500 hover:text-gray-700">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <form id="signup-form" onsubmit="handleSignup(event)">
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">Full Name</label>
+                    <input type="text" id="signup-name" required class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">Email</label>
+                    <input type="email" id="signup-email" required class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2">Password</label>
+                    <input type="password" id="signup-password" required class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">Sign Up</button>
+                <p class="text-center text-gray-600 mt-4">Already have an account? <button type="button" onclick="showLogin(); hideModals();" class="text-blue-600 hover:underline">Login</button></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Meal Log Modal -->
+    <div id="meal-log-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Log Your Meal</h2>
+                <button onclick="hideMealLogModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            
+            <form id="meal-log-form" onsubmit="handleMealLog(event)">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Meal Type Selection -->
+                    <div class="md:col-span-2">
+                        <label class="block text-gray-700 mb-2 font-medium">Meal Type</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <label class="meal-type-option flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition-colors">
+                                <input type="radio" name="meal-type" value="breakfast" class="mr-2" checked>
+                                <span class="px-2 py-1 rounded text-sm font-medium">Breakfast</span>
+                            </label>
+                            <label class="meal-type-option flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition-colors">
+                                <input type="radio" name="meal-type" value="lunch" class="mr-2">
+                                <span class="px-2 py-1 rounded text-sm font-medium">Lunch</span>
+                            </label>
+                            <label class="meal-type-option flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition-colors">
+                                <input type="radio" name="meal-type" value="dinner" class="mr-2">
+                                <span class="px-2 py-1 rounded text-sm font-medium">Dinner</span>
+                            </label>
+                            <label class="meal-type-option flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition-colors">
+                                <input type="radio" name="meal-type" value="snack" class="mr-2">
+                                <span class="px-2 py-1 rounded text-sm font-medium">Snack</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Meal Name -->
+                    <div class="md:col-span-2">
+                        <label for="meal-name" class="block text-gray-700 mb-2 font-medium">Meal Name</label>
+                        <input type="text" id="meal-name" required class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="e.g., Grilled Chicken Salad">
+                    </div>
+
+                    <!-- Time -->
+                    <div>
+                        <label for="meal-time" class="block text-gray-700 mb-2 font-medium">Time</label>
+                        <input type="time" id="meal-time" required class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </div>
+
+                    <!-- Date -->
+                    <div>
+                        <label for="meal-date" class="block text-gray-700 mb-2 font-medium">Date</label>
+                        <input type="date" id="meal-date" required class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </div>
+
+                    <!-- Calories -->
+                    <div>
+                        <label for="meal-calories" class="block text-gray-700 mb-2 font-medium">Calories</label>
+                        <input type="number" id="meal-calories" required class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="0" min="0">
+                    </div>
+
+                    <!-- Protein -->
+                    <div>
+                        <label for="meal-protein" class="block text-gray-700 mb-2 font-medium">Protein (g)</label>
+                        <input type="number" id="meal-protein" required class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="0" min="0" step="0.1">
+                    </div>
+
+                    <!-- Carbs -->
+                    <div>
+                        <label for="meal-carbs" class="block text-gray-700 mb-2 font-medium">Carbohydrates (g)</label>
+                        <input type="number" id="meal-carbs" required class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="0" min="0" step="0.1">
+                    </div>
+
+                    <!-- Fat -->
+                    <div>
+                        <label for="meal-fat" class="block text-gray-700 mb-2 font-medium">Fat (g)</label>
+                        <input type="number" id="meal-fat" required class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="0" min="0" step="0.1">
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="md:col-span-2">
+                        <label for="meal-notes" class="block text-gray-700 mb-2 font-medium">Notes (Optional)</label>
+                        <textarea id="meal-notes" rows="3" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Any additional notes about your meal..."></textarea>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex justify-end space-x-4">
+                    <button type="button" onclick="hideMealLogModal()" class="px-6 py-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Log Meal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Workout Tracking Modal -->
+    <div id="workout-tracking-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="workout-modal bg-white p-8 rounded-xl w-full max-w-4xl max-h-[75vh] overflow-y-scroll relative">
+            <!-- Visual Scrollbar Indicator -->
+            <div class="scrollbar-indicator"></div>
+            <div class="modal-header">
+                <div class="flex justify-between items-center">
+                    <h2 class="modal-title text-2xl font-bold">Workout Session: Push Day</h2>
+                    <button onclick="hideWorkoutTrackingModal()" class="text-gray-500 hover:text-gray-700 transition-colors">
+                        <i class="bi bi-x-lg text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Workout Progress -->
+            <div class="workout-progress-container mb-6 p-6 rounded-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold text-blue-800 text-lg">Workout Progress</h3>
+                    <div class="flex items-center space-x-3">
+                        <i class="bi bi-clock text-blue-600 text-xl"></i>
+                        <span id="workout-timer" class="text-2xl font-mono">00:00</span>
+                    </div>
+                </div>
+                <div class="w-full bg-blue-200 rounded-full h-3 mb-3">
+                    <div id="workout-progress-bar" class="h-3 rounded-full" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <p class="text-sm text-blue-700">Complete exercises to track your progress</p>
+                    <span id="progress-percentage" class="text-sm font-semibold text-blue-800">0% Complete</span>
+                </div>
+            </div>
+            
+            <!-- Scroll Indicator -->
+            <div class="flex justify-center mb-4">
+                <div class="scroll-indicator flex items-center space-x-2 text-blue-600 text-sm">
+                    <i class="bi bi-arrow-down"></i>
+                    <span>Scroll down to see all exercises</span>
+                    <i class="bi bi-arrow-down"></i>
+                </div>
+                <button onclick="testScroll()" class="ml-4 px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600">
+                    Test Scroll
+                </button>
+            </div>
+            
+            <!-- Quick Navigation -->
+            <div class="flex justify-center mb-6">
+                <div class="flex flex-wrap justify-center gap-2">
+                    <button onclick="scrollToExercise('bench-press')" class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition-colors">
+                        <i class="bi bi-arrow-down-circle mr-1"></i>Bench Press
+                    </button>
+                    <button onclick="scrollToExercise('incline-press')" class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition-colors">
+                        <i class="bi bi-arrow-down-circle mr-1"></i>Incline Press
+                    </button>
+                    <button onclick="scrollToExercise('shoulder-press')" class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition-colors">
+                        <i class="bi bi-arrow-down-circle mr-1"></i>Shoulder Press
+                    </button>
+                    <button onclick="scrollToExercise('tricep-pushdowns')" class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition-colors">
+                        <i class="bi bi-arrow-down-circle mr-1"></i>Tricep Pushdowns
+                    </button>
+                    <button onclick="scrollToExercise('cardio')" class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition-colors">
+                        <i class="bi bi-arrow-down-circle mr-1"></i>Cardio
+                    </button>
+                </div>
+            </div>
+
+            <!-- Exercise List -->
+            <div class="space-y-4 mb-6">
+                <h3 class="text-lg font-semibold">Exercises</h3>
+                
+                <!-- Exercise 1: Bench Press -->
+                <div class="exercise-tracking-card p-6 rounded-xl" data-exercise="bench-press">
+                    <div class="exercise-header">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="exercise-title text-xl">Bench Press</h4>
+                                <p class="text-sm text-gray-600 mt-1">4 sets x 8-10 reps</p>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <span class="target-badge text-xs px-3 py-2 rounded-full">Target: 4 sets</span>
+                                <span id="bench-press-completed" class="completed-badge text-xs px-3 py-2 rounded-full">0 completed</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div class="set-input">
+                            <label class="block text-xs text-gray-600 mb-1">Set 1</label>
+                            <div class="flex space-x-2">
+                                <input type="number" placeholder="Reps" class="w-16 p-2 border rounded text-sm" min="1">
+                                <input type="number" placeholder="Weight" class="w-20 p-2 border rounded text-sm" min="0" step="2.5">
+                                <button onclick="completeSet('bench-press', 1)" class="px-3 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600">✓</button>
+                            </div>
+                        </div>
+                        <div class="set-input">
+                            <label class="block text-xs text-gray-600 mb-1">Set 2</label>
+                            <div class="flex space-x-2">
+                                <input type="number" placeholder="Reps" class="w-16 p-2 border rounded text-sm" min="1">
+                                <input type="number" placeholder="Weight" class="w-20 p-2 border rounded text-sm" min="0" step="2.5">
+                                <button onclick="completeSet('bench-press', 2)" class="px-3 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600">✓</button>
+                            </div>
+                        </div>
+                        <div class="set-input">
+                            <label class="block text-xs text-gray-600 mb-1">Set 3</label>
+                            <div class="flex space-x-2">
+                                <input type="number" placeholder="Reps" class="w-16 p-2 border rounded text-sm" min="1">
+                                <input type="number" placeholder="Weight" class="w-20 p-2 border rounded text-sm" min="0" step="2.5">
+                                <button onclick="completeSet('bench-press', 3)" class="px-3 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600">✓</button>
+                            </div>
+                        </div>
+                        <div class="set-input">
+                            <label class="block text-xs text-gray-600 mb-1">Set 4</label>
+                            <div class="flex space-x-2">
+                                <input type="number" placeholder="Reps" class="w-16 p-2 border rounded text-sm" min="1">
+                                <input type="number" placeholder="Weight" class="w-20 p-2 border rounded text-sm" min="0" step="2.5">
+                                <button onclick="completeSet('bench-press', 4)" class="px-3 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600">✓</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exercise 2: Incline Dumbbell Press -->
+                <div class="exercise-tracking-card p-6 rounded-xl" data-exercise="incline-press">
+                    <div class="exercise-header">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="exercise-title text-xl">Incline Dumbbell Press</h4>
+                                <p class="text-sm text-gray-600 mt-1">3 sets x 10-12 reps</p>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <span class="target-badge text-xs px-3 py-2 rounded-full">Target: 3 sets</span>
+                                <span id="incline-press-completed" class="completed-badge text-xs px-3 py-2 rounded-full">0 completed</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="set-input">
+                            <label class="block text-xs text-gray-600 mb-1">Set 1</label>
+                            <div class="flex space-x-2">
+                                <input type="number" placeholder="Reps" class="w-16 p-2 border rounded text-sm" min="1">
+                                <input type="number" placeholder="Weight" class="w-20 p-2 border rounded text-sm" min="0" step="2.5">
+                                <button onclick="completeSet('incline-press', 1)" class="px-3 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600">✓</button>
+                            </div>
+                        </div>
+                        <div class="set-input">
+                            <label class="block text-xs text-gray-600 mb-1">Set 2</label>
+                            <div class="flex space-x-2">
+                                <input type="number" placeholder="Reps" class="w-16 p-2 border rounded text-sm" min="1">
+                                <input type="number" placeholder="Weight" class="w-20 p-2 border rounded text-sm" min="0" step="2.5">
+                                <button onclick="completeSet('incline-press', 2)" class="px-3 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600">✓</button>
+                            </div>
+                        </div>
+                        <div class="set-input">
+                            <label class="block text-xs text-gray-600 mb-1">Set 3</label>
+                            <div class="flex space-x-2">
+                                <input type="number" placeholder="Reps" class="w-16 p-2 border rounded text-sm" min="1">
+                                <input type="number" placeholder="Weight" class="w-20 p-2 border rounded text-sm" min="0" step="2.5">
+                                <button onclick="completeSet('incline-press', 3)" class="px-3 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600">✓</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exercise 3: Shoulder Press -->
+                <div class="exercise-tracking-card p-6 rounded-xl" data-exercise="shoulder-press">
+                    <div class="exercise-header">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="exercise-title text-xl">Shoulder Press</h4>
+                                <p class="text-sm text-gray-600 mt-1">3 sets x 10 reps</p>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <span class="target-badge text-xs px-3 py-2 rounded-full">Target: 3 sets</span>
+                                <span id="shoulder-press-completed" class="completed-badge text-xs px-3 py-2 rounded-full">0 completed</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="set-input">
+                            <label class="block text-xs text-gray-600 mb-1">Set 1</label>
+                            <div class="flex space-x-2">
+                                <input type="number" placeholder="Reps" class="w-16 p-2 border rounded text-sm" min="1">
+                                <input type="number" placeholder="Weight" class="w-20 p-2 border rounded text-sm" min="0" step="2.5">
+                                <button onclick="completeSet('shoulder-press', 1)" class="px-3 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600">✓</button>
+                            </div>
+                        </div>
+                        <div class="set-input">
+                            <label class="block text-xs text-gray-600 mb-1">Set 2</label>
+                            <div class="flex space-x-2">
+                                <input type="number" placeholder="Reps" class="w-16 p-2 border rounded text-sm" min="1">
+                                <input type="number" placeholder="Weight" class="w-20 p-2 border rounded text-sm" min="0" step="2.5">
+                                <button onclick="completeSet('shoulder-press', 2)" class="px-3 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600">✓</button>
+                            </div>
+                        </div>
+                        <div class="set-input">
+                            <label class="block text-xs text-gray-600 mb-1">Set 3</label>
+                            <div class="flex space-x-2">
+                                <input type="number" placeholder="Reps" class="w-16 p-2 border rounded text-sm" min="1">
+                                <input type="number" placeholder="Weight" class="w-20 p-2 border rounded text-sm" min="0" step="2.5">
+                                <button onclick="completeSet('shoulder-press', 3)" class="px-3 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600">✓</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exercise 4: Tricep Pushdowns -->
+                <div class="exercise-tracking-card p-6 rounded-xl" data-exercise="tricep-pushdowns">
+                    <div class="exercise-header">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="exercise-title text-xl">Tricep Pushdowns</h4>
+                                <p class="text-sm text-gray-600 mt-1">3 sets x 12-15 reps</p>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <span class="target-badge text-xs px-3 py-2 rounded-full">Target: 3 sets</span>
+                                <span id="tricep-pushdowns-completed" class="completed-badge text-xs px-3 py-2 rounded-full">0 completed</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="set-input">
+                            <label class="block text-xs text-gray-600 mb-1">Set 1</label>
+                            <div class="flex space-x-2">
+                                <input type="number" placeholder="Reps" class="w-16 p-2 border rounded text-sm" min="1">
+                                <input type="number" placeholder="Weight" class="w-20 p-2 border rounded text-sm" min="0" step="2.5">
+                                <button onclick="completeSet('tricep-pushdowns', 1)" class="px-3 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600">✓</button>
+                            </div>
+                        </div>
+                        <div class="set-input">
+                            <label class="block text-xs text-gray-600 mb-1">Set 2</label>
+                            <div class="flex space-x-2">
+                                <input type="number" placeholder="Reps" class="w-16 p-2 border rounded text-sm" min="1">
+                                <input type="number" placeholder="Weight" class="w-20 p-2 border rounded text-sm" min="0" step="2.5">
+                                <button onclick="completeSet('tricep-pushdowns', 2)" class="px-3 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600">✓</button>
+                            </div>
+                        </div>
+                        <div class="set-input">
+                            <label class="block text-xs text-gray-600 mb-1">Set 3</label>
+                            <div class="flex space-x-2">
+                                <input type="number" placeholder="Reps" class="w-16 p-2 border rounded text-sm" min="1">
+                                <input type="number" placeholder="Weight" class="w-20 p-2 border rounded text-sm" min="0" step="2.5">
+                                <button onclick="completeSet('tricep-pushdowns', 3)" class="px-3 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600">✓</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exercise 5: Cardio -->
+                <div class="exercise-tracking-card p-6 rounded-xl" data-exercise="cardio">
+                    <div class="exercise-header">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="exercise-title text-xl">Cardio: Treadmill</h4>
+                                <p class="text-sm text-gray-600 mt-1">20 min moderate intensity</p>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <span class="target-badge text-xs px-3 py-2 rounded-full">Target: 20 min</span>
+                                <span id="cardio-completed" class="completed-badge text-xs px-3 py-2 rounded-full">0 min</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <div class="flex-1">
+                            <label class="block text-xs text-gray-600 mb-1">Duration (minutes)</label>
+                            <input type="number" id="cardio-duration" placeholder="20" class="w-full p-2 border rounded text-sm" min="1" max="60">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-xs text-gray-600 mb-1">Intensity</label>
+                            <select id="cardio-intensity" class="w-full p-2 border rounded text-sm">
+                                <option value="low">Low</option>
+                                <option value="moderate" selected>Moderate</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="completeCardio()" class="px-4 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600">Complete Cardio</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workout Actions -->
+            <div class="workout-actions flex justify-between items-center pt-6 mt-6">
+                <div class="flex items-center space-x-4">
+                    <button onclick="pauseWorkout()" id="pause-btn" class="action-button pause-btn px-6 py-3 text-white rounded-xl font-medium">
+                        <i class="bi bi-pause-fill mr-2"></i> Pause Workout
+                    </button>
+                    <button onclick="resumeWorkout()" id="resume-btn" class="hidden action-button resume-btn px-6 py-3 text-white rounded-xl font-medium">
+                        <i class="bi bi-play-fill mr-2"></i> Resume Workout
+                    </button>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="hideWorkoutTrackingModal()" class="action-button save-btn px-6 py-3 text-white rounded-xl font-medium">
+                        <i class="bi bi-save mr-2"></i> Save & Exit
+                    </button>
+                    <button onclick="finishWorkout()" class="action-button finish-btn px-6 py-3 text-white rounded-xl font-medium">
+                        <i class="bi bi-check-circle mr-2"></i> Finish Workout
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Bottom Spacer to ensure scrolling -->
+            <div class="h-20"></div>
+        </div>
+    </div>
+
+    <!-- 6-Day Split Workout Plan Modal -->
+    <div id="six-day-split-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="workout-modal bg-white p-8 rounded-xl w-full max-w-6xl max-h-[85vh] overflow-y-scroll relative">
+            <!-- Visual Scrollbar Indicator -->
+            <div class="scrollbar-indicator"></div>
+            
+            <div class="modal-header">
+                <div class="flex justify-between items-center">
+                    <h2 class="modal-title text-2xl font-bold">Complete 6-Day Split Workout Plan</h2>
+                    <button onclick="hideSixDaySplitModal()" class="text-gray-500 hover:text-gray-700 transition-colors">
+                        <i class="bi bi-x-lg text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Workout Plan Overview -->
+            <div class="mb-6 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                <h3 class="text-xl font-semibold text-blue-800 mb-3">Plan Overview</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div class="bg-white p-3 rounded-lg">
+                        <span class="font-medium text-blue-700">Duration:</span> 6 weeks
+                    </div>
+                    <div class="bg-white p-3 rounded-lg">
+                        <span class="font-medium text-blue-700">Frequency:</span> 6 days/week
+                    </div>
+                    <div class="bg-white p-3 rounded-lg">
+                        <span class="font-medium text-blue-700">Rest Day:</span> Sunday
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Day-by-Day Breakdown -->
+            <div class="space-y-6">
+                <!-- Day 1: Push Day -->
+                <div class="workout-day-card p-6 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl border border-red-200">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-semibold text-red-800">Day 1: Push Day</h3>
+                            <p class="text-sm text-red-600">Chest, Shoulders, Triceps</p>
+                        </div>
+                        <span class="bg-red-100 text-red-800 text-xs px-3 py-1 rounded-full">~60 min</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="space-y-2">
+                            <h4 class="font-medium text-red-700">Chest</h4>
+                            <div class="text-sm text-red-600">
+                                <div>• Bench Press: 4 sets x 8-10 reps</div>
+                                <div>• Incline Dumbbell Press: 3 sets x 10-12 reps</div>
+                                <div>• Cable Flyes: 3 sets x 12-15 reps</div>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <h4 class="font-medium text-red-700">Shoulders & Triceps</h4>
+                            <div class="text-sm text-red-600">
+                                <div>• Shoulder Press: 3 sets x 10 reps</div>
+                                <div>• Lateral Raises: 3 sets x 12-15 reps</div>
+                                <div>• Tricep Pushdowns: 3 sets x 12-15 reps</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-red-600">Focus: Compound movements, progressive overload</span>
+                        <button onclick="startWorkout()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm">
+                            Start This Workout
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Day 2: Pull Day -->
+                <div class="workout-day-card p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-semibold text-green-800">Day 2: Pull Day</h3>
+                            <p class="text-sm text-green-600">Back, Biceps, Rear Delts</p>
+                        </div>
+                        <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full">~60 min</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="space-y-2">
+                            <h4 class="font-medium text-green-700">Back</h4>
+                            <div class="text-sm text-green-600">
+                                <div>• Deadlifts: 4 sets x 6-8 reps</div>
+                                <div>• Barbell Rows: 3 sets x 8-10 reps</div>
+                                <div>• Lat Pulldowns: 3 sets x 10-12 reps</div>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <h4 class="font-medium text-green-700">Biceps & Rear Delts</h4>
+                            <div class="text-sm text-green-600">
+                                <div>• Barbell Curls: 3 sets x 10-12 reps</div>
+                                <div>• Hammer Curls: 3 sets x 12-15 reps</div>
+                                <div>• Face Pulls: 3 sets x 15-20 reps</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-green-600">Focus: Back thickness, bicep development</span>
+                        <button onclick="startWorkout()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm">
+                            Start This Workout
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Day 3: Legs Day -->
+                <div class="workout-day-card p-6 bg-gradient-to-r from-purple-50 to-violet-50 rounded-xl border border-purple-200">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-semibold text-purple-800">Day 3: Legs Day</h3>
+                            <p class="text-sm text-purple-600">Quads, Hamstrings, Calves</p>
+                        </div>
+                        <span class="bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-full">~70 min</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="space-y-2">
+                            <h4 class="font-medium text-purple-700">Quads</h4>
+                            <div class="text-sm text-purple-600">
+                                <div>• Squats: 4 sets x 8-10 reps</div>
+                                <div>• Leg Press: 3 sets x 10-12 reps</div>
+                                <div>• Leg Extensions: 3 sets x 12-15 reps</div>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <h4 class="font-medium text-purple-700">Hamstrings & Calves</h4>
+                            <div class="text-sm text-purple-600">
+                                <div>• Romanian Deadlifts: 3 sets x 8-10 reps</div>
+                                <div>• Leg Curls: 3 sets x 12-15 reps</div>
+                                <div>• Standing Calf Raises: 4 sets x 15-20 reps</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-purple-600">Focus: Leg strength, muscle development</span>
+                        <button onclick="startWorkout()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm">
+                            Start This Workout
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Day 4: Upper Push -->
+                <div class="workout-day-card p-6 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-semibold text-orange-800">Day 4: Upper Push</h3>
+                            <p class="text-sm text-orange-600">Chest, Shoulders, Triceps (Variation)</p>
+                        </div>
+                        <span class="bg-orange-100 text-orange-800 text-xs px-3 py-1 rounded-full">~55 min</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="space-y-2">
+                            <h4 class="font-medium text-orange-700">Chest Focus</h4>
+                            <div class="text-sm text-orange-600">
+                                <div>• Incline Barbell Press: 4 sets x 8-10 reps</div>
+                                <div>• Flat Dumbbell Press: 3 sets x 10-12 reps</div>
+                                <div>• Dips: 3 sets x 8-12 reps</div>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <h4 class="font-medium text-orange-700">Shoulders & Triceps</h4>
+                            <div class="text-sm text-orange-600">
+                                <div>• Arnold Press: 3 sets x 10-12 reps</div>
+                                <div>• Upright Rows: 3 sets x 12-15 reps</div>
+                                <div>• Overhead Tricep Extensions: 3 sets x 12-15 reps</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-orange-600">Focus: Upper chest, shoulder definition</span>
+                        <button onclick="startWorkout()" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 text-sm">
+                            Start This Workout
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Day 5: Upper Pull -->
+                <div class="workout-day-card p-6 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl border border-teal-200">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-semibold text-teal-800">Day 5: Upper Pull</h3>
+                            <p class="text-sm text-teal-600">Back, Biceps, Traps (Variation)</p>
+                        </div>
+                        <span class="bg-teal-100 text-teal-800 text-xs px-3 py-1 rounded-full">~55 min</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="space-y-2">
+                            <h4 class="font-medium text-teal-700">Back Focus</h4>
+                            <div class="text-sm text-teal-600">
+                                <div>• T-Bar Rows: 4 sets x 8-10 reps</div>
+                                <div>• Single-Arm Dumbbell Rows: 3 sets x 10-12 reps</div>
+                                <div>• Close-Grip Lat Pulldowns: 3 sets x 10-12 reps</div>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <h4 class="font-medium text-teal-700">Biceps & Traps</h4>
+                            <div class="text-sm text-teal-600">
+                                <div>• Preacher Curls: 3 sets x 10-12 reps</div>
+                                <div>• Concentration Curls: 3 sets x 12-15 reps</div>
+                                <div>• Shrugs: 3 sets x 15-20 reps</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-teal-600">Focus: Back width, bicep peak</span>
+                        <button onclick="startWorkout()" class="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 text-sm">
+                            Start This Workout
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Day 6: Lower Body + Cardio -->
+                <div class="workout-day-card p-6 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl border border-indigo-200">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-semibold text-indigo-800">Day 6: Lower Body + Cardio</h3>
+                            <p class="text-sm text-indigo-600">Legs, Core, Cardiovascular</p>
+                        </div>
+                        <span class="bg-indigo-100 text-indigo-800 text-xs px-3 py-1 rounded-full">~75 min</span>
+                        </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="space-y-2">
+                            <h4 class="font-medium text-indigo-700">Lower Body</h4>
+                            <div class="text-sm text-indigo-600">
+                                <div>• Front Squats: 3 sets x 8-10 reps</div>
+                                <div>• Bulgarian Split Squats: 3 sets x 10-12 reps</div>
+                                <div>• Hip Thrusts: 3 sets x 12-15 reps</div>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <h4 class="font-medium text-indigo-700">Core & Cardio</h4>
+                            <div class="text-sm text-indigo-600">
+                                <div>• Planks: 3 sets x 60 sec</div>
+                                <div>• Russian Twists: 3 sets x 20 reps</div>
+                                <div>• HIIT Cardio: 20 min intervals</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-indigo-600">Focus: Functional strength, endurance</span>
+                        <button onclick="startWorkout()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm">
+                            Start This Workout
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bottom Spacer to ensure scrolling -->
+            <div class="h-20"></div>
+        </div>
+    </div>
+
+    <!-- Weekly Challenges Modal -->
+    <div id="challenges-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="workout-modal bg-white p-8 rounded-xl w-full max-w-5xl max-h-[85vh] overflow-y-scroll relative">
+            <!-- Visual Scrollbar Indicator -->
+            <div class="scrollbar-indicator"></div>
+            
+            <div class="modal-header">
+                <div class="flex justify-between items-center">
+                    <h2 class="modal-title text-2xl font-bold">Weekly Challenges & Achievements</h2>
+                    <button onclick="hideChallengesModal()" class="text-gray-500 hover:text-gray-700 transition-colors">
+                        <i class="bi bi-x-lg text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Current Week Progress -->
+            <div class="mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                <h3 class="text-xl font-semibold text-blue-800 mb-4">This Week's Progress</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="bg-blue-100 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
+                            <i class="bi bi-calendar-week text-2xl text-blue-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-blue-800">Week 1</h4>
+                        <p class="text-sm text-blue-600">Jan 1 - Jan 7</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-green-100 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
+                            <i class="bi bi-trophy text-2xl text-green-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-green-800">Points Earned</h4>
+                        <p class="text-2xl font-bold text-green-600" id="total-points">215</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-purple-100 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
+                            <i class="bi bi-star text-2xl text-purple-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-purple-800">Level</h4>
+                        <p class="text-2xl font-bold text-purple-600">Bronze</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Active Challenges -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-4">Active Challenges</h3>
+                <div class="space-y-4">
+                    <!-- Cardio King Challenge -->
+                    <div class="challenge-card p-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-200">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h4 class="text-lg font-semibold text-indigo-800">Cardio King</h4>
+                                <p class="text-sm text-indigo-600">Complete 5 cardio sessions this week</p>
+                                <div class="mt-2">
+                                    <div class="w-full bg-indigo-200 rounded-full h-3">
+                                        <div id="cardio-challenge-progress" class="bg-indigo-600 h-3 rounded-full transition-all duration-500" style="width: 60%"></div>
+                                    </div>
+                                    <div class="flex justify-between mt-1 text-xs text-indigo-600">
+                                        <span id="cardio-progress-text">3/5 completed</span>
+                                        <span>Reward: 100 points + Endurance Master badge</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="bg-indigo-100 text-indigo-800 text-xs px-3 py-1 rounded-full">Active</span>
+                                <div class="mt-2">
+                                    <button onclick="completeCardioSession()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 transition-colors">
+                                        <i class="bi bi-check-circle mr-1"></i>Complete Session
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Strength Warrior Challenge -->
+                    <div class="challenge-card p-6 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl border border-red-200">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h4 class="text-lg font-semibold text-red-800">Strength Warrior</h4>
+                                <p class="text-sm text-red-600">Complete 4 strength training sessions this week</p>
+                                <div class="mt-2">
+                                    <div class="w-full bg-red-200 rounded-full h-3">
+                                        <div id="strength-challenge-progress" class="bg-red-600 h-3 rounded-full transition-all duration-500" style="width: 75%"></div>
+                                    </div>
+                                    <div class="flex justify-between mt-1 text-xs text-red-600">
+                                        <span id="strength-progress-text">3/4 completed</span>
+                                        <span>Reward: 150 points + Power Master badge</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="bg-red-100 text-red-800 text-xs px-3 py-1 rounded-full">Active</span>
+                                <div class="mt-2">
+                                    <button onclick="completeStrengthSession()" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition-colors">
+                                        <i class="bi bi-check-circle mr-1"></i>Complete Session
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Consistency King Challenge -->
+                    <div class="challenge-card p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h4 class="text-lg font-semibold text-green-800">Consistency King</h4>
+                                <p class="text-sm text-green-600">Work out for 6 consecutive days</p>
+                                <div class="mt-2">
+                                    <div class="w-full bg-green-200 rounded-full h-3">
+                                        <div id="consistency-challenge-progress" class="bg-green-600 h-3 rounded-full transition-all duration-500" style="width: 50%"></div>
+                                    </div>
+                                    <div class="flex justify-between mt-1 text-xs text-green-600">
+                                        <span id="consistency-progress-text">3/6 completed</span>
+                                        <span>Reward: 200 points + Consistency Master badge</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full">Active</span>
+                                <div class="mt-2">
+                                    <button onclick="completeWorkoutDay()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors">
+                                        <i class="bi bi-check-circle mr-1"></i>Complete Day
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Available Badges -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-4">Available Badges</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="badge-card p-4 bg-amber-100 rounded-lg text-center border-2 border-amber-300">
+                        <div class="bg-amber-500 text-white rounded-full w-12 h-12 mx-auto flex items-center justify-center mb-2">
+                            <i class="bi bi-trophy-fill text-xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-amber-700">First Workout</p>
+                        <p class="text-xs text-amber-600">Unlocked!</p>
+                    </div>
+                    <div class="badge-card p-4 bg-green-100 rounded-lg text-center border-2 border-green-300">
+                        <div class="bg-green-500 text-white rounded-full w-12 h-12 mx-auto flex items-center justify-center mb-2">
+                            <i class="bi bi-calendar-check-fill text-xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-green-700">Week Streak</p>
+                        <p class="text-xs text-green-600">Unlocked!</p>
+                    </div>
+                    <div class="badge-card p-4 bg-blue-100 rounded-lg text-center border-2 border-blue-300">
+                        <div class="bg-blue-500 text-white rounded-full w-12 h-12 mx-auto flex items-center justify-center mb-2">
+                            <i class="bi bi-lightning-fill text-xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-blue-700">Protein Pro</p>
+                        <p class="text-xs text-blue-600">Unlocked!</p>
+                    </div>
+                    <div class="badge-card p-4 bg-gray-100 rounded-lg text-center border-2 border-gray-300 opacity-50">
+                        <div class="bg-gray-400 text-white rounded-full w-12 h-12 mx-auto flex items-center justify-center mb-2">
+                            <i class="bi bi-question-lg text-xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-gray-700">Endurance Master</p>
+                        <p class="text-xs text-gray-600">Locked - Complete Cardio King</p>
+                    </div>
+                    <div class="badge-card p-4 bg-gray-100 rounded-lg text-center border-2 border-gray-300 opacity-50">
+                        <div class="bg-gray-400 text-white rounded-full w-12 h-12 mx-auto flex items-center justify-center mb-2">
+                            <i class="bi bi-question-lg text-xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-gray-700">Power Master</p>
+                        <p class="text-xs text-gray-600">Locked - Complete Strength Warrior</p>
+                    </div>
+                    <div class="badge-card p-4 bg-gray-100 rounded-lg text-center border-2 border-gray-300 opacity-50">
+                        <div class="bg-gray-400 text-white rounded-full w-12 h-12 mx-auto flex items-center justify-center mb-2">
+                            <i class="bi bi-question-lg text-xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-gray-700">Consistency Master</p>
+                        <p class="text-xs text-gray-600">Locked - Complete Consistency King</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bottom Spacer to ensure scrolling -->
+            <div class="h-20"></div>
+        </div>
+    </div>
+
+    <!-- Achievements Modal -->
+    <div id="achievements-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="workout-modal bg-white p-8 rounded-xl w-full max-w-6xl max-h-[85vh] overflow-y-scroll relative">
+            <!-- Visual Scrollbar Indicator -->
+            <div class="scrollbar-indicator"></div>
+            
+            <div class="modal-header">
+                <div class="flex justify-between items-center">
+                    <h2 class="modal-title text-2xl font-bold">Achievements & Badges</h2>
+                    <button onclick="hideAchievementsModal()" class="text-gray-500 hover:text-gray-700 transition-colors">
+                        <i class="bi bi-x-lg text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Achievement Stats Overview -->
+            <div class="mb-8 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
+                <h3 class="text-xl font-semibold text-purple-800 mb-4">Your Achievement Progress</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="text-center">
+                        <div class="bg-purple-100 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
+                            <i class="bi bi-trophy text-2xl text-purple-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-purple-800">Total Badges</h4>
+                        <p class="text-2xl font-bold text-purple-600" id="total-badges">3/6</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-green-100 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
+                            <i class="bi bi-star text-2xl text-green-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-green-800">Completion Rate</h4>
+                        <p class="text-2xl font-bold text-green-600">50%</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-blue-100 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
+                            <i class="bi bi-calendar-event text-2xl text-blue-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-blue-800">Last Unlocked</h4>
+                        <p class="text-lg font-bold text-blue-600">Week Streak</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-amber-100 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
+                            <i class="bi bi-lightning text-2xl text-amber-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-amber-800">Next Target</h4>
+                        <p class="text-lg font-bold text-amber-600">Endurance Master</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Unlocked Achievements -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-4 text-green-700">Unlocked Achievements</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- First Workout -->
+                    <div class="achievement-detail-card p-6 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl border-2 border-amber-300">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-amber-500 text-white rounded-full w-16 h-16 flex items-center justify-center mr-4">
+                                <i class="bi bi-trophy-fill text-2xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-amber-800">First Workout</h4>
+                                <p class="text-sm text-amber-600">Unlocked: Jan 1, 2025</p>
+                            </div>
+                        </div>
+                        <p class="text-amber-700 mb-4">Congratulations on completing your first workout! This marks the beginning of your fitness journey.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="bg-amber-200 text-amber-800 text-xs px-3 py-1 rounded-full">Beginner</span>
+                            <span class="text-amber-600 text-sm">+50 points earned</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Week Streak -->
+                    <div class="achievement-detail-card p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border-2 border-green-300">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-green-500 text-white rounded-full w-16 h-16 flex items-center justify-center mr-4">
+                                <i class="bi bi-calendar-check-fill text-2xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-green-800">Week Streak</h4>
+                                <p class="text-sm text-green-600">Unlocked: Jan 5, 2025</p>
+                            </div>
+                        </div>
+                        <p class="text-green-700 mb-4">Amazing consistency! You've maintained a 7-day workout streak, showing true dedication to your fitness goals.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="bg-green-200 text-green-800 text-xs px-3 py-1 rounded-full">Intermediate</span>
+                            <span class="text-green-600 text-sm">+100 points earned</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Protein Pro -->
+                    <div class="achievement-detail-card p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-300">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-blue-500 text-white rounded-full w-16 h-16 flex items-center justify-center mr-4">
+                                <i class="bi bi-lightning-fill text-2xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-blue-800">Protein Pro</h4>
+                                <p class="text-sm text-blue-600">Unlocked: Jan 3, 2025</p>
+                            </div>
+                        </div>
+                        <p class="text-blue-700 mb-4">Outstanding nutrition discipline! You've consistently hit your protein goals for 5 consecutive days.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="bg-blue-200 text-blue-800 text-xs px-3 py-1 rounded-full">Intermediate</span>
+                            <span class="text-blue-600 text-sm">+75 points earned</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Locked Achievements -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-4 text-gray-700">Locked Achievements</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Endurance Master -->
+                    <div class="achievement-detail-card p-6 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl border-2 border-gray-300 opacity-75">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-indigo-500 text-white rounded-full w-16 h-16 flex items-center justify-center mr-4">
+                                <i class="bi bi-heart-pulse text-2xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-700">Endurance Master</h4>
+                                <p class="text-sm text-gray-500">Progress: 3/5</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 mb-4">Complete the Cardio King challenge by finishing 5 cardio sessions in one week.</p>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
+                            <div class="bg-indigo-500 h-2 rounded-full" style="width: 60%"></div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full">Advanced</span>
+                            <span class="text-gray-500 text-sm">+100 points + badge</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Power Master -->
+                    <div class="achievement-detail-card p-6 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl border-2 border-gray-300 opacity-75">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-red-500 text-white rounded-full w-16 h-16 flex items-center justify-center mr-4">
+                                <i class="bi bi-lightning-charge text-2xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-700">Power Master</h4>
+                                <p class="text-sm text-gray-500">Progress: 3/4</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 mb-4">Complete the Strength Warrior challenge by finishing 4 strength training sessions in one week.</p>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
+                            <div class="bg-red-500 h-2 rounded-full" style="width: 75%"></div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full">Advanced</span>
+                            <span class="text-gray-500 text-sm">+150 points + badge</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Consistency Master -->
+                    <div class="achievement-detail-card p-6 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl border-2 border-gray-300 opacity-75">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-purple-500 text-white rounded-full w-16 h-16 flex items-center justify-center mr-4">
+                                <i class="bi bi-calendar-week text-2xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-700">Consistency Master</h4>
+                                <p class="text-sm text-gray-500">Progress: 3/6</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 mb-4">Complete the Consistency King challenge by working out for 6 consecutive days.</p>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
+                            <div class="bg-purple-500 h-2 rounded-full" style="width: 50%"></div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full">Advanced</span>
+                            <span class="text-gray-500 text-sm">+200 points + badge</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Achievement Tips -->
+            <div class="mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                <h3 class="text-xl font-semibold text-blue-800 mb-4">💡 Tips to Unlock More Achievements</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <div class="flex items-start space-x-2">
+                            <i class="bi bi-check-circle text-blue-600 mt-1"></i>
+                            <p class="text-sm text-blue-700">Complete your daily workouts consistently</p>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="bi bi-check-circle text-blue-600 mt-1"></i>
+                            <p class="text-sm text-blue-700">Track your nutrition and hit macro goals</p>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="bi bi-check-circle text-blue-600 mt-1"></i>
+                            <p class="text-sm text-blue-700">Mix cardio and strength training</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex items-start space-x-2">
+                            <i class="bi bi-check-circle text-blue-600 mt-1"></i>
+                            <p class="text-sm text-blue-700">Set realistic weekly fitness goals</p>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="bi bi-check-circle text-blue-600 mt-1"></i>
+                            <p class="text-sm text-blue-700">Stay hydrated and get adequate rest</p>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="bi bi-check-circle text-blue-600 mt-1"></i>
+                            <p class="text-sm text-blue-700">Celebrate small wins along the way</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bottom Spacer to ensure scrolling -->
+            <div class="h-20"></div>
+        </div>
+    </div>
+
+    <!-- Today's Plan Modal -->
+    <div id="today-plan-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="workout-modal bg-white p-8 rounded-xl w-full max-w-4xl max-h-[85vh] overflow-y-auto relative">
+            <div class="modal-header">
+                <div class="flex justify-between items-center">
+                    <h2 class="modal-title text-2xl font-bold">Today's Workout Plan</h2>
+                    <button onclick="hideTodayPlanModal()" class="text-gray-500 hover:text-gray-700 transition-colors">
+                        <i class="bi bi-x-lg text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Plan Overview -->
+            <div class="mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 class="text-xl font-semibold text-blue-800" id="modal-plan-title">Push Day + Cardio</h3>
+                        <p class="text-blue-600" id="modal-plan-day">Day 3 of 6 - Tuesday</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">Estimated: 60 min</span>
+                    </div>
+                </div>
+                <p class="text-blue-700">Focus on chest, shoulders, and triceps with a cardio session to finish.</p>
+            </div>
+            
+            <!-- Exercise List -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-4">Today's Exercises</h3>
+                <div class="space-y-4" id="modal-exercise-list">
+                    <!-- Exercises will be populated dynamically -->
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex justify-between items-center pt-6 border-t border-gray-200">
+                <button onclick="startWorkout()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors">
+                    <i class="bi bi-play-fill mr-2"></i> Start Workout
+                </button>
+                <button onclick="hideTodayPlanModal()" class="bg-gray-500 text-white px-6 py-3 rounded-xl font-medium hover:bg-gray-600 transition-colors">
+                    <i class="bi bi-x-circle mr-2"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calories Modal -->
+    <div id="calories-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="workout-modal bg-white p-8 rounded-xl w-full max-w-4xl max-h-[85vh] overflow-y-auto relative">
+            <div class="modal-header">
+                <div class="flex justify-between items-center">
+                    <h2 class="modal-title text-2xl font-bold">Daily Calorie Tracking</h2>
+                    <button onclick="hideCaloriesModal()" class="text-gray-500 hover:text-gray-700 transition-colors">
+                        <i class="bi bi-x-lg text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Calorie Overview -->
+            <div class="mb-8 p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="bg-green-100 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
+                            <i class="bi bi-fire text-2xl text-green-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-green-800">Target Calories</h4>
+                        <p class="text-2xl font-bold text-green-600" id="modal-target-calories">2,100</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-blue-100 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
+                            <i class="bi bi-check-circle text-2xl text-blue-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-blue-800">Consumed</h4>
+                        <p class="text-2xl font-bold text-blue-600" id="modal-consumed-calories">1,250</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-purple-100 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
+                            <i class="bi bi-arrow-down text-2xl text-purple-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-purple-800">Remaining</h4>
+                        <p class="text-2xl font-bold text-purple-600" id="modal-remaining-calories">850</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Macro Breakdown -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-4">Macro Breakdown</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium text-blue-800">Protein</span>
+                            <span class="text-sm text-blue-600" id="modal-protein-grams">85g</span>
+                        </div>
+                        <div class="w-full bg-blue-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" id="modal-protein-bar" style="width: 85%"></div>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-green-50 rounded-lg border border-green-200">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium text-green-800">Carbs</span>
+                            <span class="text-sm text-green-600" id="modal-carbs-grams">158g</span>
+                        </div>
+                        <div class="w-full bg-green-200 rounded-full h-2">
+                            <div class="bg-green-600 h-2 rounded-full" id="modal-carbs-bar" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium text-orange-800">Fat</span>
+                            <span class="text-sm text-orange-600" id="modal-fat-grams">42g</span>
+                        </div>
+                        <div class="w-full bg-orange-200 rounded-full h-2">
+                            <div class="bg-orange-600 h-2 rounded-full" id="modal-fat-bar" style="width: 60%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Today's Meals -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-4">Today's Meals</h3>
+                <div class="space-y-3" id="modal-meals-list">
+                    <!-- Meals will be populated dynamically -->
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex justify-between items-center pt-6 border-t border-gray-200">
+                <button onclick="openMealLogModal('Custom', '', 0, 0, 0, 0)" class="bg-green-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-green-700 transition-colors">
+                    <i class="bi bi-plus-lg mr-2"></i> Log New Meal
+                </button>
+                <button onclick="hideCaloriesModal()" class="bg-gray-500 text-white px-6 py-3 rounded-xl font-medium hover:bg-gray-600 transition-colors">
+                    <i class="bi bi-x-circle mr-2"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Protein Modal -->
+    <div id="protein-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="workout-modal bg-white p-8 rounded-xl w-full max-w-4xl max-h-[85vh] overflow-y-auto relative">
+            <div class="modal-header">
+                <div class="flex justify-between items-center">
+                    <h2 class="modal-title text-2xl font-bold">Protein Tracking</h2>
+                    <button onclick="hideProteinModal()" class="text-gray-500 hover:text-gray-700 transition-colors">
+                        <i class="bi bi-x-lg text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Protein Overview -->
+            <div class="mb-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="bg-blue-100 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
+                            <i class="bi bi-lightning text-2xl text-blue-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-blue-800">Daily Target</h4>
+                        <p class="text-2xl font-bold text-blue-600" id="modal-protein-target">100g</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-green-100 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
+                            <i class="bi bi-check-circle text-2xl text-green-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-green-800">Consumed</h4>
+                        <p class="text-2xl font-bold text-green-600" id="modal-protein-consumed">85g</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-orange-100 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
+                            <i class="bi bi-arrow-down text-2xl text-orange-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-orange-800">Remaining</h4>
+                        <p class="text-2xl font-bold text-orange-600" id="modal-protein-remaining">15g</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Protein Sources -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-4">Today's Protein Sources</h3>
+                <div class="space-y-3" id="modal-protein-sources">
+                    <!-- Protein sources will be populated dynamically -->
+                </div>
+            </div>
+            
+            <!-- Protein Tips -->
+            <div class="mb-8 p-6 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-xl border border-yellow-200">
+                <h3 class="text-lg font-semibold text-yellow-800 mb-3">💡 Protein Tips</h3>
+                <div class="space-y-2 text-yellow-700">
+                    <div class="flex items-start space-x-2">
+                        <i class="bi bi-check-circle text-yellow-600 mt-1"></i>
+                        <p class="text-sm">Aim for 20-30g of protein per meal for optimal muscle protein synthesis</p>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <i class="bi bi-check-circle text-yellow-600 mt-1"></i>
+                        <p class="text-sm">Include protein in every meal and snack throughout the day</p>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <i class="bi bi-check-circle text-yellow-600 mt-1"></i>
+                        <p class="text-sm">Consume protein within 30 minutes after your workout for recovery</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex justify-between items-center pt-6 border-t border-gray-200">
+                <button onclick="openMealLogModal('Custom', '', 0, 0, 0, 0)" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors">
+                    <i class="bi bi-plus-lg mr-2"></i> Log High-Protein Meal
+                </button>
+                <button onclick="hideProteinModal()" class="bg-gray-500 text-white px-6 py-3 rounded-xl font-medium hover:bg-gray-600 transition-colors">
+                    <i class="bi bi-x-circle mr-2"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workouts Modal -->
+    <div id="workouts-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="workout-modal bg-white p-8 rounded-xl w-full max-w-4xl max-h-[85vh] overflow-y-auto relative">
+            <div class="modal-header">
+                <div class="flex justify-between items-center">
+                    <h2 class="modal-title text-2xl font-bold">Workout History & Stats</h2>
+                    <button onclick="hideWorkoutsModal()" class="text-gray-500 hover:text-gray-700 transition-colors">
+                        <i class="bi bi-x-lg text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Workout Stats Overview -->
+            <div class="mb-8 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="text-center">
+                        <div class="bg-purple-100 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
+                            <i class="bi bi-calendar-month text-2xl text-purple-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-purple-800">This Month</h4>
+                        <p class="text-2xl font-bold text-purple-600" id="modal-monthly-workouts">18</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-green-100 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
+                            <i class="bi bi-calendar-week text-2xl text-green-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-green-800">This Week</h4>
+                        <p class="text-2xl font-bold text-green-600" id="modal-weekly-workouts">4</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-blue-100 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
+                            <i class="bi bi-clock text-2xl text-blue-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-blue-800">Total Time</h4>
+                        <p class="text-2xl font-bold text-blue-600" id="modal-total-time">24h</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-orange-100 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
+                            <i class="bi bi-trophy text-2xl text-orange-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-orange-800">Streak</h4>
+                        <p class="text-2xl font-bold text-orange-600" id="modal-workout-streak">7 days</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Workouts -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-4">Recent Workouts</h3>
+                <div class="space-y-3" id="modal-recent-workouts">
+                    <!-- Recent workouts will be populated dynamically -->
+                </div>
+            </div>
+            
+            <!-- Workout Types Breakdown -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-4">Workout Types This Month</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="p-4 bg-red-50 rounded-lg border border-red-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-medium text-red-800">Push Days</span>
+                            <span class="text-sm text-red-600">6</span>
+                        </div>
+                        <div class="w-full bg-red-200 rounded-full h-2">
+                            <div class="bg-red-600 h-2 rounded-full" style="width: 33%"></div>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-green-50 rounded-lg border border-green-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-medium text-green-800">Pull Days</span>
+                            <span class="text-sm text-green-600">6</span>
+                        </div>
+                        <div class="w-full bg-green-200 rounded-full h-2">
+                            <div class="bg-green-600 h-2 rounded-full" style="width: 33%"></div>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-medium text-blue-800">Leg Days</span>
+                            <span class="text-sm text-blue-600">6</span>
+                        </div>
+                        <div class="w-full bg-blue-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: 33%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex justify-between items-center pt-6 border-t border-gray-200">
+                <button onclick="startWorkout()" class="bg-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-purple-700 transition-colors">
+                    <i class="bi bi-play-fill mr-2"></i> Start New Workout
+                </button>
+                <button onclick="hideWorkoutsModal()" class="bg-gray-500 text-white px-6 py-3 rounded-xl font-medium hover:bg-gray-600 transition-colors">
+                    <i class="bi bi-x-circle mr-2"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-gray-800 text-white py-12 mt-20">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">Ace Nation</h3>
+                    <p class="text-gray-400">AI-powered fitness and nutrition planning for your health and wellness journey.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Features</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white">Workout Plans</a></li>
+                        <li><a href="#" class="hover:text-white">Meal Planning</a></li>
+                        <li><a href="#" class="hover:text-white">Progress Tracking</a></li>
+                        <li><a href="#" class="hover:text-white">Achievements</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Company</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white">About Us</a></li>
+                        <li><a href="#" class="hover:text-white">Blog</a></li>
+                        <li><a href="#" class="hover:text-white">Careers</a></li>
+                        <li><a href="#" class="hover:text-white">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Connect</h4>
+                    <div class="flex space-x-4 mb-4">
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="bi bi-facebook text-xl"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="bi bi-twitter text-xl"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="bi bi-instagram text-xl"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="bi bi-youtube text-xl"></i></a>
+                    </div>
+                    <p class="text-gray-400">Subscribe to our newsletter</p>
+                    <div class="flex mt-2">
+                        <input type="email" id="newsletter-email" placeholder="Your email" class="px-3 py-2 text-gray-800 rounded-l-lg focus:outline-none">
+                        <button onclick="subscribeNewsletter()" class="bg-blue-600 px-4 py-2 rounded-r-lg hover:bg-blue-700 transition-colors">Subscribe</button>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row justify-between">
+                <p class="text-gray-400">© 2025 Ace Nation. All rights reserved.</p>
+                <div class="flex space-x-6 mt-4 md:mt-0">
+                    <a href="#" class="text-gray-400 hover:text-white">Privacy Policy</a>
+                    <a href="#" class="text-gray-400 hover:text-white">Terms of Service</a>
+                    <a href="#" class="text-gray-400 hover:text-white">Cookie Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script src="js/script.js"></script>
+	</body>
+</html>
